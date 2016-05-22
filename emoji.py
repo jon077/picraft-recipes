@@ -1,5 +1,6 @@
 from picraft import World, Vector, Block, O, X, Y, Z, line, lines, filled
 from time import sleep
+from random import randint
 
 import ConfigParser
 
@@ -30,8 +31,6 @@ def eyes(player_pos):
             eye + 1*Z + -1*Y]))
 
 def smile(player_pos):
-    print("smile")
-
     height = player_pos + 9*Y
 
     left_anchor = height - 3*Z
@@ -39,29 +38,91 @@ def smile(player_pos):
 
     yield list(line(left_anchor, right_anchor))
     yield list(line(left_anchor, left_anchor - 2*Z + 2*Y))
-    yield list(line(right_anchor, right_anchor + 2*Z + 2*Y))
+    yield list(line(right_anchor, right_anchor + 2*Z + 2    *Y))
 
 
-## render list of blocks
-blocks = list(eyes(w.player.tile_pos))
-blocks.extend(smile(w.player.tile_pos))
 
 
 ## Render
+def render(blocks):
+    with w.connection.batch_start():
+        for p in blocks:
+            w.blocks[p] = Block('gold_block')
 
-w.say('Don\'t worry.  Be Happy!')
-print("Rendering blocks: " + str(blocks))
-with w.connection.batch_start():
-    for p in blocks:
-        w.blocks[p] = Block('gold_block')
 
-##sleep 10 seconds
-sleep(10)
+def erase(blocks):
+    ## erase
+    with w.connection.batch_start():
+        for p in blocks:
+            w.blocks[p] = Block('air')
 
-## erase
-print("Erasing blocks: " + str(blocks))
-with w.connection.batch_start():
-    for p in blocks:
-        w.blocks[p] = Block('air')
 
-w.say('See you next time!')
+
+#location to put genie
+pos = Vector(22,7,-3)
+print("pos: " + str(pos))
+
+##define bounds
+low_corner = pos - 5*X - 5*Z
+high_corner = pos + 5*X + 5*Z
+
+ran_x = 0
+ran_z = 0
+
+state = "UNKNOWN"
+
+print("low_corner: " + str(low_corner))
+print("high_corner: " + str(high_corner))
+
+
+blocks = list(eyes(pos))
+blocks.extend(smile(pos))
+
+
+while(True):
+
+    ### Determine how to know if a host player exists
+    player_pos = w.player.tile_pos
+    print(player_pos)
+    if(low_corner.x < player_pos.x and
+       low_corner.z < player_pos.z and
+       high_corner.x > player_pos.x and
+       high_corner.z > player_pos.z ):
+
+       render(blocks)
+
+       if(state == "HIDDEN"):
+           print("[%s,%s] [%s,%s]" % (ran_x, ran_z, player_pos.x, player_pos.z ))
+
+           if(player_pos.x == ran_x and player_pos.z == ran_z):
+               w.say("Congratulations!  Enjoy.  Come back soon!")
+               w.blocks[player_pos - Y] = Block('diamond_block')
+
+               erase(blocks)
+               state = "UNKNOWN"
+               sleep(120)
+
+       if(state == "ASK"):
+           w.say("I've hidden a treat nearby.  Look for it.")
+           ran_x = randint(low_corner.x+1,high_corner.x-1)
+           ran_z = randint(low_corner.z+1,high_corner.z-1)
+
+           state = "HIDDEN"
+
+       if(state == "UNKNOWN"):
+           w.say("Hello.  Would you like a gift?")
+           state = "ASK"
+
+           sleep(3)
+
+       print "[" + str(w.player.tile_pos) +  "]: " + state
+
+    else:
+        if(state == "HIDDEN"):
+            w.say("Better luck next time.")
+        elif(state != "UNKNOWN"):
+            w.say("See ya later, alligator.")
+
+        erase(blocks)
+        state = "UNKNOWN"
+        sleep(1)
