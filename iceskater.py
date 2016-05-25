@@ -1,10 +1,22 @@
 from picraft import World, Vector, Block, O, X, Y, Z, line, lines, filled
 from time import sleep, time
 from random import randint,choice
-
-
 import ConfigParser
 
+
+
+def filter_rink(low_corner):
+   def myfilter(block):
+       return (low_corner.x < block.x and
+       low_corner.x + 25 > block.x and
+       low_corner.z < block.z and
+       low_corner.z + 25 > block.z)
+   return myfilter
+
+
+
+
+rink_height = 17
 
 config = ConfigParser.ConfigParser()
 
@@ -22,7 +34,6 @@ origin = Vector(45,7,-9);
 
 base_of_stairs = [origin, origin + 3*X]
 
-w.blocks[origin+2*Y] = Block("sponge")
 for y in range(0, 10):
     left_stair = base_of_stairs[0] + y*Z + y*Y
     right_stair = base_of_stairs[1] + y*Z + y*Y
@@ -33,14 +44,26 @@ for y in range(0, 10):
     w.blocks[left_stair + 1*Y, right_stair + 1*Y] = Block("fence")
     w.blocks[left_stair + 2*Y, right_stair + 2*Y] = Block("glowstone")
 
+low_corner = Vector(31,16,0)
+rink = lines([
+    low_corner,
+    low_corner + 25*X,
+    low_corner + 25*X + 25*Z,
+    low_corner + 25*Z
+])
+
+w.blocks[rink] = Block("wool")
+
 
 
 pos_queue = []
 while(True):
-    ## add X/Z restrictions too
+    tp = w.player.tile_pos;
+    if(tp.y >= rink_height):
 
-    if(w.player.tile_pos.y > 17):
-        pos = w.player.tile_pos - (w.player.tile_pos.y - 16)*Y
+        pos =  tp - (tp.y - (rink_height-1))*Y
+        print("pos: " + str(pos))
+
         positions = [
         pos,
         pos + 1*X,
@@ -55,6 +78,10 @@ while(True):
         pos - 2*X,
         pos + 2*Z,
         pos - 2*Z]
+
+
+        positions = filter(filter_rink(low_corner), positions)
+
         pos_queue.append(positions)
 
         w.blocks[positions] = Block("ice")
