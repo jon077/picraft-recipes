@@ -54,42 +54,42 @@ rink = lines([
 
 w.blocks[rink] = Block("wool")
 
-
-
 pos_queue = []
 while(True):
-    tp = w.player.tile_pos;
-    if(tp.y >= rink_height):
-
-        pos =  tp - (tp.y - (rink_height-1))*Y
-        print("pos: " + str(pos))
-
-        positions = [
-        pos,
-        pos + 1*X,
-        pos - 1*X,
-        pos + 1*Z,
-        pos - 1*Z,
-        pos + 1*X + 1*Z,
-        pos + 1*X - 1*Z,
-        pos - 1*X + 1*Z,
-        pos - 1*X - 1*Z,
-        pos + 2*X,
-        pos - 2*X,
-        pos + 2*Z,
-        pos - 2*Z]
 
 
-        positions = filter(filter_rink(low_corner), positions)
+    for player_key in w.players.keys():
+        tp = w.players[player_key].tile_pos;
+        if(tp.y >= rink_height):
 
-        pos_queue.append(positions)
+            pos =  tp - (tp.y - (rink_height-1))*Y
 
-        w.blocks[positions] = Block("ice")
+            positions = [
+            pos,
+            pos + 1*X,
+            pos - 1*X,
+            pos + 1*Z,
+            pos - 1*Z,
+            pos + 1*X + 1*Z,
+            pos + 1*X - 1*Z,
+            pos - 1*X + 1*Z,
+            pos - 1*X - 1*Z,
+            pos + 2*X,
+            pos - 2*X,
+            pos + 2*Z,
+            pos - 2*Z]
 
-        num_blocks = len(positions) + 30
+
+            positions = filter(filter_rink(low_corner), positions)
+
+            pos_queue.append(positions)
+
+            w.blocks[positions] = Block("ice")
+
+            num_blocks = len(positions) + 30
 
 
-        print(str(len(pos_queue)) + " > " + str(num_blocks))
+            print(str(len(pos_queue)) + " > " + str(num_blocks))
 
-        while(len(pos_queue) > num_blocks):
-            w.blocks[pos_queue.pop(0)] = Block("air")
+            while(len(pos_queue) > num_blocks):
+                w.blocks[pos_queue.pop(0)] = Block("air")
